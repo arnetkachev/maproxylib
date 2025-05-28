@@ -25,3 +25,54 @@ dependencies = []
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "A",   # flake8-builtins
+    "F",   # pyflakes
+    "E",   # pycodestyle
+    "I",   # isort
+    "N",   # pep8-naming
+    "ICN", # flake8-import-conventions
+    "ANN", # flake8 type annotations
+    "RUF", # ruff-specific rules
+    "PIE", # flake8-pie
+    "SIM", # flake8-simplify
+    # "PL",  # Pylint
+]
+ignore = [
+    "RUF002", # ambiguous-unicode-character-docstring
+    "RUF045", # Assignment without annotation found in dataclass body
+    "ANN201", # Missing return type annotation for public function
+    "ANN204", # Missing return type annotation for special method
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+disallow_untyped_defs = true

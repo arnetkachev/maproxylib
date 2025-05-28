@@ -1,15 +1,15 @@
-# 🗝️ maproxylib — Mapping Proxy Library§§
-§
-> Transparent access to nested objects dictionary fields via descriptors.
+# 🗝️ maproxylib — Mapping Proxy Library
+
+> Transparent access to nested objects/dicts fields via descriptors.
 
 🇷🇺 [Читать на русском](README.ru.md)
 
-`maproxylib` is a lightweight Python library that allows you to **transparently access dictionary fields as class attributes**, using the power of **descriptors**. Especially useful when working with JSON models, DTOs, complex nested structures, and API responses.
+`maproxylib` is a lightweight Python library that allows you to **transparently access inner objects/dicts fields as class attributes**, using the power of **descriptors**. Especially useful when working with JSON models, DTOs, complex nested structures, and API responses.
 
 [![PyPI version](https://img.shields.io/pypi/v/maproxylib)](https://pypi.org/project/maproxylib/)
 [![Python versions](https://img.shields.io/pypi/pyversions/maproxylib)](https://pypi.org/project/maproxylib/)
-[![License: MIT](https://img.shields.io/github/license/yourname/maproxylib)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/yourname/maproxylib/actions/workflows/publish.yml/badge.svg)](https://github.com/yourname/maproxylib/actions)
+[![License: MIT](https://img.shields.io/github/license/arnetkachev/maproxylib)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/arnetkachev/maproxylib/actions/workflows/publish.yml/badge.svg)](https://github.com/arnetkachev/maproxylib/actions)
 
 ---
 
@@ -19,14 +19,26 @@
 - Support for deeply nested structures (via `path`)  
 - Type hint support (`typing`, `TypeVar`)  
 - Integration with `dataclasses`  
-- Extensible architecture (via mixins)
+- Read-only fields support
 
 ---
 
 ## 🚀 Installation
+Various dependency management tools are supported:
 
+### pip
 ```bash
 pip install maproxylib
+```
+
+### poetry
+```bash
+poetry add maproxylib
+```
+
+### uv
+```bash
+uv add maproxylib
 ```
 
 ---
@@ -36,37 +48,50 @@ pip install maproxylib
 ### 1. Basic Usage
 
 ```python
-from dataclasses import dataclass
-from maproxylib import ProxyField, DefaultMixin
+from dataclasses import dataclass, field
+
+from maproxylib import ProxyFieldFactory
+
+params_field = ProxyFieldFactory(storage_name="params")
+# Descriptor factory for storage `params`
 
 @dataclass
-class MyModel(DefaultMixin):
-    params: dict = field(default_factory=dict)  # Dictionary storage
-    name = ProxyField[str](storage_name="params", key="name", default="Guest")
-    age = ProxyField[int](storage_name="params", key="age", default=30)
+class MyModel:
+    params: dict = field(default_factory=dict)
+    # The storage for `params_field` descriptors
+
+    name = params_field[str](default="Guest")
+    age = params_field[int](default=30)
 
 model = MyModel()
-print(model.name)  # Guest
-model.name = "Alice"
-print(model.params)  # {'name': 'Alice', 'age': 30}
+assert model.name == "Guest"  # Default value (storage is empty)
+
+model.name = "Alice"  # Set values in storage
+model.age = 25
+assert model.params == {"name": "Alice", "age": 25}  # Actual values in storage
 ```
 
 ### 2. Nested Fields
 
 ```python
-from maproxylib import get_storage_field
+from dataclasses import dataclass, field
 
-address_field = get_storage_field("data", path=["address"])
+from maproxylib import ProxyFieldFactory
+
+data_field = ProxyFieldFactory(storage_name="data")
+# Descriptor fabric for storage `data`
 
 @dataclass
 class User:
-    data: dict = field(default_factory=dict)
-    city = address_field[str](key="city", default="Unknown")
+    data: dict = field(default_factory=dict)  # Storage
+    city = data_field[str](key="address.city", default="Unknown")
+    # The descriptor key in dot notation represents access to `data["address"]["city"]`
 
 user = User()
-user.city = "Moscow"
-print(user.data)
-# {'address': {'city': 'Moscow'}}
+user.city = "Moscow"  # Same as user.data["address"]["city"] = "Moscow"
+
+assert user.data == {"address": {"city": "Moscow"}}
+# The storage contains current values ​​in the required structure
 ```
 
 ---
@@ -75,10 +100,8 @@ print(user.data)
 
 | Component | Description |
 |----------|-------------|
-| `ProxyField[T]` | Descriptor providing access to dictionary fields |
-| `get_storage_field(...)` | Factory for creating convenient fields by path or storage |
-| `ProxyMixin` | Base mixin to extend behavior |
-| `DefaultMixin` | Mixin that automatically applies defaults to all fields |
+| `ProxyField[T]` | A descriptor that provides access to a field |
+| `ProxyFieldFactory(...)` | Factory for creating descriptors with preset parameters |
 
 ---
 
@@ -87,8 +110,8 @@ print(user.data)
 You can easily test with `pytest`:
 
 ```bash
-pip install pytest
-pytest tests/
+uv sync --group dev
+uv run pytest
 ```
 
 ---
@@ -98,6 +121,7 @@ pytest tests/
 To install the package locally in development mode:
 
 ```bash
+uv sync --group dev
 uv install -e .
 ```
 
@@ -118,12 +142,11 @@ MIT License – see the [`LICENSE`](LICENSE) file for details.
 
 ## 📬 Author
 
-- [@yourgithub](https://github.com/yourgithub)
+- [@arnetkachev](https://github.com/arnetkachev)
 
 ---
 
 ## 🔗 Links
 
 - PyPI: https://pypi.org/project/maproxylib/
-- GitHub: https://github.com/yourname/maproxylib
-```
+- GitHub: https://github.com/arnetkachev/maproxylib
